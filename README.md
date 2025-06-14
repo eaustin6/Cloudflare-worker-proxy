@@ -1,6 +1,4 @@
-Of course! A great project deserves a "super cool" README to match.  
-Here is a full-fledged README.md file designed specifically for your Starlight Relay project. It includes thematic text, emojis, badges, placeholders for images/GIFs, and detailed instructions for deployment and customization.  
-You can copy the entire content below and save it as a README.md file in your project's repository (e.g., on GitHub).  
+ 
 <br>  
 <div align="center">  
 <h1 align="center">🌌 Starlight Relay 🌌</h1>  
