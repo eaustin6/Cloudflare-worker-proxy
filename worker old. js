@@ -1,0 +1,188 @@
+// Dynamic Cloudflare Proxy with Animated UI
+const BRAND_NAME = "Sito Cloud Proxies";
+const DEFAULT_CSS = `
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    display: grid;
+    place-items: center;
+  }
+
+  .container {
+    width: min(90%, 600px);
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-5px);
+  }
+
+  h1 {
+    text-align: center;
+    margin: 0 0 2rem 0;
+    background: linear-gradient(45deg, #4F46E5, #EC4899);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2.5rem;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .input-group {
+    position: relative;
+  }
+
+  input {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+  }
+
+  input:focus {
+    outline: none;
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  }
+
+  button {
+    background: linear-gradient(45deg, #4F46E5, #EC4899);
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+  }
+
+  .watermark {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+  }
+`;
+
+function showUrlForm() {
+  return new Response(
+    `<!DOCTYPE html>
+    <html>
+      <head>
+        <title>${BRAND_NAME}</title>
+        <style>${DEFAULT_CSS}</style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="card">
+            <h1>${BRAND_NAME}</h1>
+            <form onsubmit="handleSubmit(event)">
+              <div class="input-group">
+                <input 
+                  type="url" 
+                  id="urlInput" 
+                  placeholder="https://example.com" 
+                  required
+                  autofocus
+                >
+              </div>
+              <button type="submit">
+                <span>🚀 Launch Proxy</span>
+              </button>
+            </form>
+          </div>
+          <div class="watermark">Secure Web Proxy Service</div>
+        </div>
+        <script>
+          function handleSubmit(e) {
+            e.preventDefault();
+            const url = document.getElementById('urlInput').value;
+            const encodedUrl = encodeURIComponent(url);
+            window.location = '/' + encodedUrl;
+          }
+
+          // Animate input on load
+          setTimeout(() => {
+            document.getElementById('urlInput').style.transform = 'scale(1)';
+          }, 100);
+        </script>
+      </body>
+    </html>`,
+    { headers: { 'Content-Type': 'text/html' } }
+  );
+}
+
+// ... (keep the existing escapeRegExp, rewriteContent, and handleRequest functions from previous version)
+
+async function handleRequest(request) {
+  const url = new URL(request.url);
+  const path = url.pathname.slice(1);
+
+  // Show branded UI for root path
+  if (!path) return showUrlForm();
+
+  try {
+    const targetUrl = decodeURIComponent(path);
+    // ... (rest of the proxy handling logic remains same as previous version)
+  } catch (error) {
+    // Custom error page with branding
+    return new Response(
+      `<!DOCTYPE html>
+      <html>
+        <head>
+          <title>Error - ${BRAND_NAME}</title>
+          <style>${DEFAULT_CSS}</style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="card">
+              <h1>⚠️ Proxy Error</h1>
+              <p style="text-align: center; color: #dc2626;">${error.message}</p>
+              <button onclick="window.location='/'">← Return Home</button>
+            </div>
+          </div>
+        </body>
+      </html>`,
+      { status: 500, headers: { 'Content-Type': 'text/html' } }
+    );
+  }
+}
+
+addEventListener('fetch', event => {
+  event.respondWith(handleRequest(event.request));
+});
