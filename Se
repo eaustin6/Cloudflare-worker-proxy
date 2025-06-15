@@ -1,0 +1,85 @@
+// Dynamic Cloudflare Proxy with Error Handling
+const BRAND_NAME = "Sito Cloud Proxies";
+
+// ... (keep the CSS and HTML from previous version)
+
+async function handleRequest(request) {
+  const url = new URL(request.url);
+  const path = url.pathname.slice(1);
+
+  try {
+    // Show UI for empty path
+    if (!path) return showUrlForm();
+
+    // Decode and validate target URL
+    const targetUrl = decodeURIComponent(path);
+    if (!/^https?:\/\//i.test(targetUrl)) {
+      throw new Error('Invalid URL - must start with http:// or https://');
+    }
+
+    // Create full URL with query params
+    const fullTarget = new URL(targetUrl + url.search);
+    const proxyUrl = `https://${url.host}/${encodeURIComponent(targetUrl)}`;
+
+    // Fetch and process response
+    const response = await fetch(fullTarget.toString(), {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': fullTarget.origin
+      }
+    });
+
+    // Clone response before reading
+    const clonedResponse = response.clone();
+    const contentType = clonedResponse.headers.get('content-type') || '';
+    let content = await clonedResponse.text();
+
+    // Rewrite content for supported types
+    if (contentType.startsWith('text/html') || 
+        contentType.startsWith('text/css') || 
+        contentType.includes('javascript')) {
+      content = rewriteContent(content, fullTarget.origin, proxyUrl);
+    }
+
+    // Return modified response
+    return new Response(content, {
+      status: response.status,
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+
+  } catch (error) {
+    // Ensure ALL errors return a valid Response
+    console.error(`Proxy error: ${error.message}`);
+    return new Response(
+      `<!DOCTYPE html>
+      <html>
+        <head>
+          <title>Error - ${BRAND_NAME}</title>
+          <style>${DEFAULT_CSS}</style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="card">
+              <h1>⚠️ Proxy Error</h1>
+              <p style="text-align: center; color: #dc2626;">${error.message}</p>
+              <button onclick="window.location='/'">← Return Home</button>
+            </div>
+          </div>
+        </body>
+      </html>`,
+      { 
+        status: 500, 
+        headers: { 
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-store'
+        } 
+      }
+    );
+  }
+}
+
+// ... (keep other functions the same)
